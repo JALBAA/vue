@@ -31,6 +31,7 @@ export function initExtend (Vue: GlobalAPI) {
     }
 
     const Sub = function VueComponent (options) {
+      console.log('===============new sub componenet=============')
       this._init(options)
     }
     Sub.prototype = Object.create(Super.prototype)

@@ -22,9 +22,13 @@ export let activeInstance: any = null
 export let isUpdatingChildComponent: boolean = false
 
 export function initLifecycle (vm: Component) {
+  console.log(`==========initLifecycle==========`)
+  console.log('初始化一个组件的生命周期')
+  console.log(`获得${vm}的$options`)
   const options = vm.$options
 
   // locate first non-abstract parent
+  console.log('通过options找到第一个非抽象父对象')
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -32,13 +36,14 @@ export function initLifecycle (vm: Component) {
     }
     parent.$children.push(vm)
   }
-
+  console.log('初始化vm的$parent, $root')
   vm.$parent = parent
   vm.$root = parent ? parent.$root : vm
 
+  console.log('初始化vm的$children, $refs,初始值为空值')
   vm.$children = []
   vm.$refs = {}
-
+  console.log('初始化vm的_wather,_inactive,_directInactive,_isMounted,_isDestroyed,_isBeingDestroyed')
   vm._watcher = null
   vm._inactive = null
   vm._directInactive = false
@@ -48,20 +53,32 @@ export function initLifecycle (vm: Component) {
 }
 
 export function lifecycleMixin (Vue: Class<Component>) {
+  console.log(`==========lifecycleMixin==========`)
+  console.log('Vue对象的lifecycle mixin')
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
+    console.log(`==========Vue.prototype._update==========`)
+    console.log(`vnode:${vnode} updating`)
+    console.log(`vm就是this`)
     const vm: Component = this
+
+    console.log(`更新前，拿到vm.$el, vm._vnode`)
+    console.log('prevActiveInstance = activeInstance')
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const prevActiveInstance = activeInstance
+
+    console.log('更新vm的各个部件, _vnode $el $vnode')
     activeInstance = vm
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {
       // initial render
+      console.log('初始化渲染')
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      console.log('vdom diff')
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     activeInstance = prevActiveInstance
@@ -136,6 +153,7 @@ export function mountComponent (
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  console.log(`挂载组件vm: ${vm}, el: ${el}`)
   vm.$el = el
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode
@@ -157,11 +175,13 @@ export function mountComponent (
       }
     }
   }
+  console.log('调用vm的beforeMount钩子')
   callHook(vm, 'beforeMount')
 
   let updateComponent
   /* istanbul ignore if */
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
+    console.log('comp的vdom update性能监控')
     updateComponent = () => {
       const name = vm._name
       const id = vm._uid
@@ -179,7 +199,9 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    console.log('定义update组件过程')
     updateComponent = () => {
+      console.log(`vm._uid: ${vm._uid}, 组件被通知更新，更新内容是vm渲染结果`)
       vm._update(vm._render(), hydrating)
     }
   }
@@ -187,6 +209,8 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  console.log(`new 一个Watcher，把这个vm和刚才定义的update组件过程, 传入Watcher`)
+  console.log(`同时给Watcher传入一个before的回调，当vm执行并且是_isMounted时，执行vm的beforeUpdate钩子`)
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted) {
@@ -199,9 +223,11 @@ export function mountComponent (
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
+    console.log('vm没有$vnode，直接手动调用mounted钩子')
     vm._isMounted = true
     callHook(vm, 'mounted')
   }
+  console.log(`返回vm`)
   return vm
 }
 

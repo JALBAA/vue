@@ -1014,6 +1014,7 @@ function toggleObserving (value) {
  * collect dependencies and dispatch updates.
  */
 var Observer = function Observer (value) {
+  console.log('wwwwwwwwwwwwwwww', value);
   this.value = value;
   this.dep = new Dep();
   this.vmCount = 0;

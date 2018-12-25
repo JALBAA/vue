@@ -38,6 +38,8 @@ Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
+  console.log(`================Vue.prototype.$mount=====================`)
+  console.log(`公共方法mount`)
   el = el && inBrowser ? query(el) : undefined
   return mountComponent(this, el, hydrating)
 }

@@ -2618,9 +2618,13 @@ var activeInstance = null;
 var isUpdatingChildComponent = false;
 
 function initLifecycle (vm) {
+  console.log("==========initLifecycle==========");
+  console.log('初始化一个组件的生命周期');
+  console.log(("获得" + vm + "的$options"));
   var options = vm.$options;
 
   // locate first non-abstract parent
+  console.log('通过options找到第一个非抽象父对象');
   var parent = options.parent;
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -2628,13 +2632,14 @@ function initLifecycle (vm) {
     }
     parent.$children.push(vm);
   }
-
+  console.log('初始化vm的$parent, $root');
   vm.$parent = parent;
   vm.$root = parent ? parent.$root : vm;
 
+  console.log('初始化vm的$children, $refs,初始值为空值');
   vm.$children = [];
   vm.$refs = {};
-
+  console.log('初始化vm的_wather,_inactive,_directInactive,_isMounted,_isDestroyed,_isBeingDestroyed');
   vm._watcher = null;
   vm._inactive = null;
   vm._directInactive = false;
@@ -2644,20 +2649,32 @@ function initLifecycle (vm) {
 }
 
 function lifecycleMixin (Vue) {
+  console.log("==========lifecycleMixin==========");
+  console.log('Vue对象的lifecycle mixin');
   Vue.prototype._update = function (vnode, hydrating) {
+    console.log("==========Vue.prototype._update==========");
+    console.log(("vnode:" + vnode + " updating"));
+    console.log("vm就是this");
     var vm = this;
+
+    console.log("更新前，拿到vm.$el, vm._vnode");
+    console.log('prevActiveInstance = activeInstance');
     var prevEl = vm.$el;
     var prevVnode = vm._vnode;
     var prevActiveInstance = activeInstance;
+
+    console.log('更新vm的各个部件, _vnode $el $vnode');
     activeInstance = vm;
     vm._vnode = vnode;
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
     if (!prevVnode) {
       // initial render
+      console.log('初始化渲染');
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);
     } else {
       // updates
+      console.log('vdom diff');
       vm.$el = vm.__patch__(prevVnode, vnode);
     }
     activeInstance = prevActiveInstance;
@@ -2732,6 +2749,7 @@ function mountComponent (
   el,
   hydrating
 ) {
+  console.log(("挂载组件vm: " + vm + ", el: " + el));
   vm.$el = el;
   if (!vm.$options.render) {
     vm.$options.render = createEmptyVNode;
@@ -2753,11 +2771,13 @@ function mountComponent (
       }
     }
   }
+  console.log('调用vm的beforeMount钩子');
   callHook(vm, 'beforeMount');
 
   var updateComponent;
   /* istanbul ignore if */
   if ("development" !== 'production' && config.performance && mark) {
+    console.log('comp的vdom update性能监控');
     updateComponent = function () {
       var name = vm._name;
       var id = vm._uid;
@@ -2775,7 +2795,9 @@ function mountComponent (
       measure(("vue " + name + " patch"), startTag, endTag);
     };
   } else {
+    console.log('定义update组件过程');
     updateComponent = function () {
+      console.log(("vm._uid: " + (vm._uid) + ", 组件被通知更新，更新内容是vm渲染结果"));
       vm._update(vm._render(), hydrating);
     };
   }
@@ -2783,6 +2805,8 @@ function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  console.log("new 一个Watcher，把这个vm和刚才定义的update组件过程, 传入Watcher");
+  console.log("同时给Watcher传入一个before的回调，当vm执行并且是_isMounted时，执行vm的beforeUpdate钩子");
   new Watcher(vm, updateComponent, noop, {
     before: function before () {
       if (vm._isMounted) {
@@ -2795,9 +2819,11 @@ function mountComponent (
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
   if (vm.$vnode == null) {
+    console.log('vm没有$vnode，直接手动调用mounted钩子');
     vm._isMounted = true;
     callHook(vm, 'mounted');
   }
+  console.log("返回vm");
   return vm
 }
 
@@ -3328,6 +3354,7 @@ function proxy (target, sourceKey, key) {
 }
 
 function initState (vm) {
+  console.log(vm);
   vm._watchers = [];
   var opts = vm.$options;
   if (opts.props) { initProps(vm, opts.props); }
@@ -4598,7 +4625,11 @@ function renderMixin (Vue) {
 var uid$3 = 0;
 
 function initMixin (Vue) {
+  console.log('==========initMixin==========');
+  console.log('mixin进初始化方法');
   Vue.prototype._init = function (options) {
+    console.log('==========Vue.prototype._init==========');
+    console.log('开始初始化一个组件(vm)');
     var vm = this;
     // a uid
     vm._uid = uid$3++;
@@ -4610,35 +4641,50 @@ function initMixin (Vue) {
       endTag = "vue-perf-end:" + (vm._uid);
       mark(startTag);
     }
-
+    // console.log('options:' + JSON.stringify(options))
     // a flag to avoid this being observed
     vm._isVue = true;
     // merge options
     if (options && options._isComponent) {
+      console.log("当有options传入的时候，如果当前vm是内部组件");
+      console.log('优化内部组件的初始化进程');
+      console.log('因为动态的options合并太慢了，而且不需要特别对待内部组件的options');
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
       initInternalComponent(vm, options);
     } else {
+      console.log('一般是根节点的组件，$options的初始化进程');
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},
         vm
       );
     }
+    // console.log('vm.$options: ' + JSON.stringify(vm.$options))
     /* istanbul ignore else */
     {
+      console.log("如果不是生产环境，初始化vm代理");
       initProxy(vm);
     }
     // expose real self
+    console.log("留存vm到_self, vm._self = vm");
     vm._self = vm;
+    console.log('初始化vm的生存周期');
     initLifecycle(vm);
+    console.log('初始化vm的事件');
     initEvents(vm);
+    console.log('初始化vm的渲染');
     initRender(vm);
+    console.log('调用vm的beforeCreate钩子');
     callHook(vm, 'beforeCreate');
+    console.log("在data/props之前调用vm的注入");
     initInjections(vm); // resolve injections before data/props
+    console.log('初始化vm的state');
     initState(vm);
+    console.log("在data/props之后调用provide");
     initProvide(vm); // resolve provide after data/props
+    console.log('调用vm的created钩子');
     callHook(vm, 'created');
 
     /* istanbul ignore if */
@@ -4647,8 +4693,9 @@ function initMixin (Vue) {
       mark(endTag);
       measure(("vue " + (vm._name) + " init"), startTag, endTag);
     }
-
     if (vm.$options.el) {
+      console.log('如果vm.$options有el, 则以$options.el为模板进行渲染');
+      console.log('即，最传统的模板模式');
       vm.$mount(vm.$options.el);
     }
   };
@@ -4805,6 +4852,7 @@ function initExtend (Vue) {
     }
 
     var Sub = function VueComponent (options) {
+      console.log('===============new sub componenet=============');
       this._init(options);
     };
     Sub.prototype = Object.create(Super.prototype);
@@ -5037,6 +5085,7 @@ var builtInComponents = {
 /*  */
 
 function initGlobalAPI (Vue) {
+  console.log('========================第一步，initGloablAPI====================');
   // config
   var configDef = {};
   configDef.get = function () { return config; };
@@ -5073,10 +5122,13 @@ function initGlobalAPI (Vue) {
   Vue.options._base = Vue;
 
   extend(Vue.options.components, builtInComponents);
-
+  console.log('==================initUse====================');
   initUse(Vue);
+  console.log('==================initMixin======================');
   initMixin$1(Vue);
+  console.log('==================initExtend=========================');
   initExtend(Vue);
+  console.log('==================initAssetRegisters====================');
   initAssetRegisters(Vue);
 }
 
@@ -8553,6 +8605,8 @@ Vue.prototype.$mount = function (
   el,
   hydrating
 ) {
+  console.log("================Vue.prototype.$mount=====================");
+  console.log("公共方法mount");
   el = el && inBrowser ? query(el) : undefined;
   return mountComponent(this, el, hydrating)
 };

@@ -18,6 +18,7 @@ import {
 } from '../util/index'
 
 export function initGlobalAPI (Vue: GlobalAPI) {
+  console.log('========================第一步，initGloablAPI====================')
   // config
   const configDef = {}
   configDef.get = () => config
@@ -54,9 +55,12 @@ export function initGlobalAPI (Vue: GlobalAPI) {
   Vue.options._base = Vue
 
   extend(Vue.options.components, builtInComponents)
-
+  console.log('==================initUse====================')
   initUse(Vue)
+  console.log('==================initMixin======================')
   initMixin(Vue)
+  console.log('==================initExtend=========================')
   initExtend(Vue)
+  console.log('==================initAssetRegisters====================')
   initAssetRegisters(Vue)
 }
